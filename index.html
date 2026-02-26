@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frontend Developer — Practical Test Assignment</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#000000",
+            gray: {
+              DEFAULT: "#828282",
+              light: "#F8F9F8",
+              border: "#E0E0E0",
+            },
+            white: {
+              DEFAULT: "#FFFFFF",
+              20: "rgba(255, 255, 255, 0.2)",
+              60: "rgba(255, 255, 255, 0.6)",
+            },
+            black: {
+              DEFAULT: "#000000",
+              20: "rgba(0, 0, 0, 0.2)",
+              30: "rgba(0, 0, 0, 0.3)",
+              50: "rgba(0, 0, 0, 0.5)",
+              60: "rgba(0, 0, 0, 0.6)",
+            },
+          },
+          fontFamily: {
+            sans: ["Hanken Grotesk", "sans-serif"],
+          },
+          animation: {
+            marquee: "marquee 20s linear infinite",
+          },
+          keyframes: {
+            marquee: {
+              "0%": { transform: "translateX(0)" },
+              "100%": { transform: "translateX(-100%)" },
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap"
+    rel="stylesheet">
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+
+<body class="bg-white text-gray-900">
+
+  <!-- Navbar -->
+  <nav id="navbar"
+    class="w-full px-6 md:px-8 py-4 flex items-center justify-between font-sans text-sm sticky top-0 z-50 bg-white">
+    <!-- Left: Language/Currency Selector -->
+    <div class="flex items-center gap-1 cursor-pointer">
+      <span>TH - THB</span>
+      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </div>
+
+    <!-- Center: Hamburger Menu (Mobile) -->
+    <button id="menu-toggle" class="md:hidden relative w-6 h-6 flex items-center justify-center"
+      aria-label="Toggle menu">
+      <!-- Hamburger Icon -->
+      <span id="hamburger-icon" class="flex flex-col gap-1.5">
+        <span class="w-6 h-0.5 bg-black transition-all"></span>
+        <span class="w-6 h-0.5 bg-black transition-all"></span>
+      </span>
+      <!-- Close Icon (X) -->
+      <span id="close-icon" class="hidden absolute">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </span>
+    </button>
+
+    <!-- Center: Navigation Links (Desktop) -->
+    <div id="desktop-nav" class="hidden md:flex items-center gap-12 text-black">
+      <!-- Menu items will be rendered here dynamically -->
+    </div>
+
+    <!-- Right: Sign In & Cart -->
+    <div class="flex items-center gap-4 md:gap-6">
+      <a href="#" class="hover:opacity-70 transition-opacity tracking-wide">SIGN IN</a>
+      <a href="#" class="hover:opacity-70 transition-opacity">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+        </svg>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu (Hidden by default) -->
+  <div id="mobile-menu" class="hidden md:hidden fixed inset-0 top-14 bg-white z-50 overflow-y-auto font-sans">
+    <div id="mobile-menu-content" class="flex flex-col items-center pt-12 gap-6">
+      <!-- Menu items will be rendered here dynamically -->
+    </div>
+  </div>
+
+  <!-- Navigation Script -->
+  <script>
+    // Render Desktop Navigation
+    function renderDesktopNav() {
+      const desktopNav = document.getElementById('desktop-nav');
+      if (!desktopNav || !MOCK_DATA?.navMenu) return;
+
+      // Style definitions
+      const styles = {
+        menuButton: 'flex items-center gap-1 tracking-wide hover:opacity-70 transition-opacity',
+        menuLink: 'tracking-wide hover:opacity-70 transition-opacity',
+        arrow: 'w-2.5 h-2.5 transition-transform group-hover:rotate-180',
+        dropdown: 'absolute top-full left-1/2 -translate-x-1/2 pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200',
+        dropdownBox: 'bg-white shadow-lg border border-gray-border py-3 min-w-[180px]',
+        dropdownItem: 'block px-5 py-2 text-sm text-gray whitespace-nowrap hover:text-black hover:bg-gray-light transition-colors',
+      };
+
+      const arrowIcon = `
+        <svg class="${styles.arrow}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>`;
+
+      desktopNav.innerHTML = MOCK_DATA.navMenu.map(item => {
+        const hasSubmenu = item.submenu?.length > 0;
+
+        if (hasSubmenu) {
+          const submenuItems = item.submenu.map(sub =>
+            `<a href="${sub.href}" class="${styles.dropdownItem}">${sub.label}</a>`
+          ).join('');
+
+          return `
+            <div class="relative group">
+              <button class="${styles.menuButton}">
+                <span>${item.label}</span>
+                ${arrowIcon}
+              </button>
+              <div class="${styles.dropdown}">
+                <div class="${styles.dropdownBox}">${submenuItems}</div>
+              </div>
+            </div>`;
+        }
+
+        return `<a href="${item.href}" class="${styles.menuLink}">${item.label}</a>`;
+      }).join('');
+    }
+
+    // Render Mobile Menu
+    function renderMobileMenu() {
+      const mobileMenuContent = document.getElementById('mobile-menu-content');
+      if (!mobileMenuContent || !MOCK_DATA?.navMenu) return;
+
+      mobileMenuContent.innerHTML = MOCK_DATA.navMenu.map(item => `
+        <div class="menu-item flex flex-col items-center">
+          <button class="menu-toggle transition-all duration-300 flex items-center gap-2 py-2 text-lg tracking-wide ${item.submenu?.length ? '' : 'pointer-events-none'}" data-menu-id="${item.id}">
+            <span>${item.label}</span>
+            ${item.submenu?.length ? `
+              <svg class="menu-arrow transition-transform duration-300" width="9" height="6" viewBox="0 0 9 6" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4.33008 6L8.66021 0H-4.91142e-05L4.33008 6Z" fill="black"/>
+              </svg>
+            ` : ''}
+          </button>
+          ${item.submenu?.length ? `
+            <div class="submenu hidden flex-col items-center gap-3 pt-3 pb-2">
+              ${item.submenu.map(sub => `
+                <a href="${sub.href}" class="text-base text-gray hover:text-black transition-colors">${sub.label}</a>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+
+      // Add click handlers for submenu toggles
+      document.querySelectorAll('.menu-toggle').forEach(btn => {
+        btn.addEventListener('click', function () {
+          // Toggle active state with Tailwind classes
+          this.classList.toggle('text-2xl');
+          this.classList.toggle('font-semibold');
+
+          const submenu = this.nextElementSibling;
+          const arrow = this.querySelector('.menu-arrow');
+          if (submenu && submenu.classList.contains('submenu')) {
+            submenu.classList.toggle('hidden');
+            submenu.classList.toggle('flex');
+            arrow?.classList.toggle('rotate-180');
+          }
+        });
+      });
+    }
+
+    // Mobile Menu Toggle
+    document.getElementById('menu-toggle')?.addEventListener('click', function () {
+      const hamburgerIcon = document.getElementById('hamburger-icon');
+      const closeIcon = document.getElementById('close-icon');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      hamburgerIcon.classList.toggle('hidden');
+      closeIcon.classList.toggle('hidden');
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+      renderDesktopNav();
+      renderMobileMenu();
+    });
+  </script>
+
+  <!--  BRAND -->
+  <div id="brand-text"
+    class="fixed left-1/2 -translate-x-1/2 top-20 z-40 pointer-events-none text-white mix-blend-difference transition-opacity duration-300">
+    <p class="text-5xl md:text-[12rem] font-black scale-x-[140%]  md:scale-x-[140%] origin-center">
+      PLAIMANAS</p>
+  </div>
+
+  <!-- Text Hide Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const brandText = document.getElementById('brand-text');
+      const inquirySection = document.getElementById('inquiry');
+
+      if (!brandText || !inquirySection) return;
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          brandText.classList.toggle('opacity-0', entry.isIntersecting);
+        });
+      }, {
+        threshold: 0,
+        rootMargin: '-80px 0px 0px 0px' // offset สำหรับ navbar height
+      });
+
+      observer.observe(inquirySection);
+    });
+  </script>
+
+  <!-- Main Content -->
+  <main id="app" class="isolate">
+
+    <!-- Section 1: Video -->
+    <section id="video" class="w-full h-[844px] relative bg-black isolate">
+      <video class="w-full h-full object-cover absolute inset-0" autoplay muted loop playsinline>
+        <source src="assets/file/video/video.mp4" type="video/mp4">
+      </video>
+    </section>
+
+    <!-- Section 2: New -->
+    <section id="new" class="py-16 md:py-24 bg-white isolate">
+      <div class="container mx-auto px-4 flex flex-col items-center">
+
+        <!-- Image Card with Text Overlay -->
+        <div id="new-image-card" class="relative w-full max-w-[282px] md:max-w-[520px] aspect-[4/5] overflow-hidden">
+          <!-- Image -->
+          <img src="assets/file/image/NEW.jpg" alt="New Collection" class="w-full h-full object-cover">
+
+          <!-- Text Overlay - ควบคุมด้วย JS -->
+          <div id="new-text-overlay" class="absolute inset-x-0 flex items-center justify-center pointer-events-none"
+            style="top: 50%; transform: translateY(-50%);">
+            <h2 class="text-3xl md:text-6xl font-bold text-white drop-shadow-lg">NEW</h2>
+          </div>
+        </div>
+
+        <script>
+          (function () {
+            const card = document.getElementById('new-image-card');
+
+            const text = document.getElementById('new-text-overlay');
+
+
+            function updateTextPosition() {
+              // console.log(card.getBoundingClientRect());
+              // console.log(text);
+              // หาตำแหน่งการ์ดบนหน้าจอ
+              const rect = card.getBoundingClientRect();
+              // หาจุดกึ่งกลางของการ์ด
+              const cardCenter = rect.top + rect.height / 2;
+              // หาจุดกึ่งกลางของหน้าจอ
+              const viewportCenter = window.innerHeight / 2;
+
+              // คำนวณ offset จากกลางรูป
+              let offset = viewportCenter - cardCenter;
+
+              // จำกัดให้อยู่ในขอบเขตรูป (กลาง → ล่าง)
+              const maxOffset = rect.height / 2 - text.offsetHeight / 2;
+              offset = Math.max(0, Math.min(maxOffset, offset));
+
+              // ตำแหน่ง = กลางรูป + offset
+              const topPercent = 50 + (offset / rect.height * 100);
+              text.style.top = topPercent + '%';
+            }
+
+            window.addEventListener('scroll', updateTextPosition);
+            window.addEventListener('resize', updateTextPosition);
+            updateTextPosition();
+          })();
+        </script>
+
+        <!-- Title & Description -->
+        <div class="mt-6 md:mt-10 text-center max-w-[342px] md:max-w-[715px]">
+          <h3 class="text-base md:text-lg font-semibold text-black">
+            Sed egestas, nibh a condimentum imperdiet
+          </h3>
+          <p class="mt-2 md:mt-4 text-sm md:text-base text-gray leading-relaxed">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo, turpis elit
+            ultricies justo, vitae molestie quam justo ut lacus. Proin vitae
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Section 3: Bestseller -->
+    <section id="bestseller" class="flex flex-col items-center bg-gray-light py-16 md:py-24 isolate">
+      <!-- Video Container with Text Overlay -->
+      <div id="bestseller-video-card"
+        class="relative mx-auto w-[346px] h-[219px] md:w-[1200px] md:h-[759px] overflow-hidden">
+        <!-- Video -->
+        <video class="w-full h-full object-cover" autoplay muted loop playsinline>
+          <source src="assets/file/video/BESTSELLER.mp4" type="video/mp4">
+        </video>
+
+        <!-- Gradient Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/20 pointer-events-none"></div>
+
+        <!-- Text Overlay - ควบคุมด้วย JS -->
+        <div id="bestseller-text-overlay"
+          class="absolute inset-x-0 flex items-center justify-center pointer-events-none z-10"
+          style="top: 50%; transform: translateY(-50%);">
+          <h2 class="text-[45px] md:text-6xl font-bold text-white drop-shadow-lg">BESTSELLER</h2>
+        </div>
+      </div>
+
+      <script>
+        (function () {
+          const card = document.getElementById('bestseller-video-card');
+          const text = document.getElementById('bestseller-text-overlay');
+
+          function updateTextPosition() {
+            const rect = card.getBoundingClientRect();
+            const cardCenter = rect.top + rect.height / 2;
+            const viewportCenter = window.innerHeight / 2;
+
+            // คำนวณ offset จากกลางวิดีโอ
+            let offset = viewportCenter - cardCenter;
+
+            // จำกัดให้อยู่ในขอบเขตวิดีโอ (กลาง → ล่าง)
+            const maxOffset = rect.height / 2 - text.offsetHeight / 2;
+            offset = Math.max(0, Math.min(maxOffset, offset));
+
+            // ตำแหน่ง = กลางวิดีโอ + offset
+            const topPercent = 50 + (offset / rect.height * 100);
+            text.style.top = topPercent + '%';
+          }
+
+          window.addEventListener('scroll', updateTextPosition);
+          window.addEventListener('resize', updateTextPosition);
+          updateTextPosition();
+        })();
+      </script>
+      <!-- Title & Description -->
+      <div class="mt-6 md:mt-10 text-center max-w-[342px] md:max-w-[715px]">
+        <h3 class="text-base md:text-lg font-semibold text-black">
+          Sed egestas, nibh a condimentum imperdiet
+        </h3>
+        <p class="mt-2 md:mt-4 text-sm md:text-base text-gray leading-relaxed">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo, turpis elit
+          ultricies justo, vitae molestie quam justo ut lacus. Proin vitae
+        </p>
+      </div>
+
+    </section>
+
+    <!-- Section 4: Collection -->
+    <section id="collection" class="min-h-fit relative bg-white py-16 isolate">
+      <div class="container justify-items-center mx-auto  px-4">
+        <div class="grid grid-cols-4 md:grid-cols-2 gap-[68px]">
+          <!-- COLLECTION01 - hover เป็นวิดีโอ -->
+          <div class="relative col-span-4 md:col-span-2 w-full group overflow-hidden">
+            <img src="assets/file/image/COLLECTION01.jpg" alt="New Collection 01"
+              class="w-full h-full object-cover opacity-100 group-hover:opacity-0 transition-opacity duration-300">
+            <video src="assets/file/video/hovercollectionvideo.mp4" muted loop
+              class="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              onmouseenter="this.play()" onmouseleave="this.pause(); this.currentTime=0;"></video>
+            <!-- Text Overlay -->
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <h2 class="text-3xl md:text-6xl font-bold text-white">COLLECTION 01</h2>
+            </div>
+          </div>
+
+          <!-- COLLECTION02 - hover เปลี่ยนรูป -->
+          <div
+            class="relative col-span-2 md:col-span-1 w-full aspect-square md:w-full md:h-full bg-[url('assets/file/image/COLLECTION02.jpg')] hover:bg-[url('assets/file/image/hovercollection.jpg')] bg-cover bg-center transition-all duration-300">
+            <!-- Text Overlay -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <h2 class="text-3xl md:text-[40px] text-center font-bold text-white">COLLECTION 02</h2>
+            </div>
+          </div>
+
+          <!-- COLLECTION03 - hover เปลี่ยนรูป -->
+          <div
+            class="relative col-span-2 md:col-span-1  w-full aspect-square md:w-full md:h-full bg-[url('assets/file/image/COLLECTION03.jpg')] hover:bg-[url('assets/file/image/hovercollection.jpg')] bg-cover bg-center transition-all duration-300">
+            <!-- Text Overlay -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <h2 class="text-3xl md:text-[40px] text-center font-bold text-white">COLLECTION 03</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Marquee -->
+    <section id="marquee" class="relative bg-black content-center overflow-hidden h-[85px] isolate">
+      <div class="marquee-wrapper flex whitespace-nowrap">
+        <div class="marquee-content flex items-center animate-marquee">
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">NEW ARRIVAL</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M56.6667 21.25V28.3333H14.1667V35.4167H7.08333V28.3333H0V21.25H7.08333V14.1667H14.1667V21.25H56.6667ZM21.25 7.08333H14.1667V14.1667H21.25V7.08333ZM21.25 7.08333H28.3333V0H21.25V7.08333ZM21.25 42.5H14.1667V35.4167H21.25V42.5ZM21.25 42.5H28.3333V49.5833H21.25V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">BEST SELLING</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M-4.19617e-05 21.25V28.3333H42.5V35.4167H49.5833V28.3333H56.6666V21.25H49.5833V14.1667H42.5V21.25H-4.19617e-05ZM35.4166 7.08333H42.5V14.1667H35.4166V7.08333ZM35.4166 7.08333H28.3333V0H35.4166V7.08333ZM35.4166 42.5H42.5V35.4167H35.4166V42.5ZM35.4166 42.5H28.3333V49.5833H35.4166V42.5Z"
+                fill="white" />
+            </svg>
+
+          </span>
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">NEW ARRIVAL</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M56.6667 21.25V28.3333H14.1667V35.4167H7.08333V28.3333H0V21.25H7.08333V14.1667H14.1667V21.25H56.6667ZM21.25 7.08333H14.1667V14.1667H21.25V7.08333ZM21.25 7.08333H28.3333V0H21.25V7.08333ZM21.25 42.5H14.1667V35.4167H21.25V42.5ZM21.25 42.5H28.3333V49.5833H21.25V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">BEST SELLING</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M-4.19617e-05 21.25V28.3333H42.5V35.4167H49.5833V28.3333H56.6666V21.25H49.5833V14.1667H42.5V21.25H-4.19617e-05ZM35.4166 7.08333H42.5V14.1667H35.4166V7.08333ZM35.4166 7.08333H28.3333V0H35.4166V7.08333ZM35.4166 42.5H42.5V35.4167H35.4166V42.5ZM35.4166 42.5H28.3333V49.5833H35.4166V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+        </div>
+        <div class="marquee-content flex items-center animate-marquee">
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">NEW ARRIVAL</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M56.6667 21.25V28.3333H14.1667V35.4167H7.08333V28.3333H0V21.25H7.08333V14.1667H14.1667V21.25H56.6667ZM21.25 7.08333H14.1667V14.1667H21.25V7.08333ZM21.25 7.08333H28.3333V0H21.25V7.08333ZM21.25 42.5H14.1667V35.4167H21.25V42.5ZM21.25 42.5H28.3333V49.5833H21.25V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">BEST SELLING</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M-4.19617e-05 21.25V28.3333H42.5V35.4167H49.5833V28.3333H56.6666V21.25H49.5833V14.1667H42.5V21.25H-4.19617e-05ZM35.4166 7.08333H42.5V14.1667H35.4166V7.08333ZM35.4166 7.08333H28.3333V0H35.4166V7.08333ZM35.4166 42.5H42.5V35.4167H35.4166V42.5ZM35.4166 42.5H28.3333V49.5833H35.4166V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">NEW ARRIVAL</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M56.6667 21.25V28.3333H14.1667V35.4167H7.08333V28.3333H0V21.25H7.08333V14.1667H14.1667V21.25H56.6667ZM21.25 7.08333H14.1667V14.1667H21.25V7.08333ZM21.25 7.08333H28.3333V0H21.25V7.08333ZM21.25 42.5H14.1667V35.4167H21.25V42.5ZM21.25 42.5H28.3333V49.5833H21.25V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+          <span class="text-white text-2xl md:text-6xl font-bold tracking-wider px-8">BEST SELLING</span>
+          <span class="text-white text-2xl md:text-4xl px-4">
+            <svg width="57" height="50" viewBox="0 0 57 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M-4.19617e-05 21.25V28.3333H42.5V35.4167H49.5833V28.3333H56.6666V21.25H49.5833V14.1667H42.5V21.25H-4.19617e-05ZM35.4166 7.08333H42.5V14.1667H35.4166V7.08333ZM35.4166 7.08333H28.3333V0H35.4166V7.08333ZM35.4166 42.5H42.5V35.4167H35.4166V42.5ZM35.4166 42.5H28.3333V49.5833H35.4166V42.5Z"
+                fill="white" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Info -->
+    <section id="info" class="relative bg-gray-light border-t border-gray-border py-16 md:py-24 isolate">
+      <div class="container mx-auto px-6 md:px-16">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8">
+          <!-- Worldwide Shipping -->
+          <div class="col-span-1">
+            <h3 class="text-base md:text-lg font-bold text-black uppercase tracking-wide">
+              Worldwide Shipping
+            </h3>
+            <p class="mt-4 text-sm md:text-base text-gray leading-relaxed">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo, turpis elit
+              ultricies justo, vitae molestie quam justo ut lacus. Proin vitae
+            </p>
+          </div>
+
+          <!-- Customer Service -->
+          <div class="col-span-1">
+            <h3 class="text-base md:text-lg font-bold text-black uppercase tracking-wide">
+              Customer Service
+            </h3>
+            <p class="mt-4 text-sm md:text-base text-gray leading-relaxed">
+              <a href="#" class="underline hover:text-black transition-colors">Lorem ipsum dolor sit amet</a>,
+              consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo, turpis elit ultricies justo, vitae
+              molestie quam justo ut lacus. Proin vitae
+            </p>
+          </div>
+
+          <!-- Secure Payment -->
+          <div class="col-span-1">
+            <h3 class="text-base md:text-lg font-bold text-black uppercase tracking-wide">
+              Secure Payment
+            </h3>
+            <p class="mt-4 text-sm md:text-base text-gray leading-relaxed">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo, turpis elit
+              ultricies justo, vitae molestie quam justo ut lacus. Proin vitae
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 7: FAQ -->
+    <section id="faq" class="relative bg-black py-16 md:py-24 isolate">
+      <div class="container mx-auto px-6 md:px-16">
+        <!-- Section Header -->
+        <div class="text-center mb-10 md:mb-14">
+          <h2 class="text-2xl md:text-4xl font-bold text-white tracking-wide uppercase">
+            Frequently Asked Questions
+          </h2>
+          <p class="mt-4 text-sm md:text-base text-white-60 leading-relaxed">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo.
+          </p>
+        </div>
+
+        <!-- FAQ Tabs Container -->
+        <div id="faq-tabs-container"
+          class="grid grid-cols-1 md:flex gap-3 mb-10 md:mb-14 md:justify-self-center  mx-auto">
+          <!-- Tabs will be rendered by JavaScript -->
+        </div>
+
+        <!-- FAQ Accordion Container -->
+        <div id="faq-accordion-container" class="max-w-4xl mx-auto">
+          <!-- FAQ Items will be rendered by JavaScript -->
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Accordion Script -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        // Get FAQ data from mockData.js
+        const faqData = MOCK_DATA.faqCategories;
+
+        // Cache DOM references
+        const tabsContainer = document.getElementById('faq-tabs-container');
+        const accordionContainer = document.getElementById('faq-accordion-container');
+
+        // Default active category
+        let activeCategory = 'returns';
+
+        // === TABS ===
+        function renderFaqTabs() {
+          tabsContainer.innerHTML = faqData.map(category => `
+            <button
+              class="faq-tab w-fit justify-self-center px-6 py-2 text-sm font-medium border border-[#828282] rounded-full transition-colors ${category.id === activeCategory
+              ? 'bg-white text-black'
+              : 'bg-gray text-white hover:bg-white hover:text-black'
+            }"
+              data-category="${category.id}">
+              ${category.label}
+            </button>
+          `).join('');
+        }
+
+        // Update tab styles without re-rendering
+        function updateTabStyles() {
+          document.querySelectorAll('.faq-tab').forEach(tab => {
+            const isActive = tab.dataset.category === activeCategory;
+            tab.classList.toggle('bg-white', isActive);
+            tab.classList.toggle('text-black', isActive);
+            tab.classList.toggle('bg-gray', !isActive);
+            tab.classList.toggle('text-white', !isActive);
+          });
+        }
+
+        tabsContainer.addEventListener('click', function (e) {
+          // console.log('e.target:', e.target);
+          // console.log('e.currentTarget:', e.currentTarget);
+          // console.log('closest .faq-tab:', e.target.closest('.faq-tab'));
+          const tab = e.target.closest('.faq-tab');
+          if (!tab || tab.dataset.category === activeCategory) return;
+          activeCategory = tab.dataset.category;
+          updateTabStyles();
+          renderFaqAccordion();
+        });
+
+        // === ACCORDION ===
+        function renderFaqAccordion() {
+          const categoryData = faqData.find(cat => cat.id === activeCategory);
+          if (!categoryData) return;
+
+          accordionContainer.innerHTML = categoryData.questions.map((item, index) => `
+            <div class="faq-item border-b border-white-20">
+              <button class="faq-toggle w-full flex items-center justify-between py-6 text-left" aria-expanded="${index === 0 ? 'true' : 'false'}">
+                <span class="text-base md:text-lg font-bold text-white uppercase">${item.question}</span>
+                <svg class="faq-arrow transition-transform ${index === 0 ? '' : 'rotate-180'}" width="16" height="9" viewBox="0 0 16 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14.6508 7.31689L7.65076 1.31689L0.650757 7.31689" stroke="white" stroke-width="2" />
+                </svg>
+              </button>
+              <div class="faq-content ${index === 0 ? '' : 'hidden'} pb-6">
+                <p class="text-sm md:text-base text-white-60 leading-relaxed">
+                  ${item.answer}
+                </p>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // Event Delegation for Accordion - ผูกครั้งเดียว
+        accordionContainer.addEventListener('click', function (e) {
+          const toggle = e.target.closest('.faq-toggle');
+          if (!toggle) return;
+
+          const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+
+          // ปิดทุกอันก่อน
+          document.querySelectorAll('.faq-toggle').forEach(t => {
+            t.setAttribute('aria-expanded', 'false');
+            t.nextElementSibling.classList.add('hidden');
+            t.querySelector('.faq-arrow').classList.add('rotate-180');
+          });
+
+          // ถ้าอันที่คลิกปิดอยู่ ให้เปิด
+          if (!isExpanded) {
+            toggle.setAttribute('aria-expanded', 'true');
+            toggle.nextElementSibling.classList.remove('hidden');
+            toggle.querySelector('.faq-arrow').classList.remove('rotate-180');
+          }
+        });
+
+        // Initial render
+        renderFaqTabs();
+        renderFaqAccordion();
+      });
+    </script>
+
+
+    <!-- Section 8: Make an Inquiry Form -->
+    <section id="inquiry" class="relative bg-white py-16 md:py-24 border-t border-gray-border isolate">
+      <div class="container mx-auto px-6 md:px-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 max-w-5xl mx-auto">
+          <!-- Left: Title & Description -->
+          <div>
+            <h2 class="text-[40px] md:text-5xl font-bold text-black uppercase leading-tight md:max-w-[346px]">
+              Make an<br class="hidden md:block"> Inquiry
+            </h2>
+            <p class="md:max-w-[346px] mt-4 md:mt-6 text-sm md:text-base text-gray leading-relaxed">
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam ornare, nisl non rhoncus commodo.
+            </p>
+          </div>
+
+          <!-- Right: Contact Form -->
+          <div>
+            <form id="inquiry-form" class="space-y-6">
+              <!-- Radio Buttons -->
+              <div class="flex flex-row items-center gap-8">
+                <label class="flex items-center gap-2 min-h-[61px]">
+                  <input type="radio" name="inquiry-type" value="onsite" checked class="w-5 h-5 accent-black">
+                  <span class="text-sm font-medium text-black">Onsite</span>
+                </label>
+                <label class="flex items-center gap-2 min-h-[61px]">
+                  <input type="radio" name="inquiry-type" value="hybrid" class="w-5 h-5 accent-black">
+                  <span class="text-sm font-medium text-black">Hybrid</span>
+                </label>
+              </div>
+
+              <!-- Name & Email Row -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label class=" block text-xs text-gray mb-1"></label>
+                  <input type="text" id="fullname" name="fullname" required
+                    class="min-h-[61px] w-full py-3 border-b border-gray-border bg-transparent text-black placeholder-gray focus:outline-none focus:border-black transition-colors"
+                    placeholder="Full name">
+                </div>
+                <div>
+                  <label class=" block text-xs text-gray mb-1">Email*</label>
+                  <input type="email" id="inquiry-email" name="email" required
+                    class="w-full py-2 border-b border-gray-border bg-transparent text-black placeholder-gray focus:outline-none focus:border-black transition-colors"
+                    value="Plaimanas@gmail.com">
+                </div>
+              </div>
+
+              <!-- Phone & Subject Row -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <input type="tel" id="phone" name="phone" required
+                    class="w-full py-3 border-b border-gray-border bg-transparent text-black placeholder-gray focus:outline-none focus:border-black transition-colors"
+                    placeholder="Phone Number*">
+                </div>
+                <div class="relative">
+                  <select id="inquiry-subject" name="subject" required
+                    class="w-full py-3 border-b border-gray-border bg-transparent text-gray focus:outline-none focus:border-black transition-colors appearance-none cursor-pointer">
+                    <option value="">Select Subject*</option>
+                    <option value="general">General Inquiry</option>
+                    <option value="order">Order Status</option>
+                    <option value="product">Product Information</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <svg class="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray pointer-events-none"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Terms Checkbox -->
+              <div class="flex items-center gap-3 pt-2">
+                <input type="checkbox" id="terms" name="terms" required
+                  class="w-5 h-5 border-2 border-gray-border rounded accent-black cursor-pointer">
+                <label for="terms" class="text-sm text-gray cursor-pointer">
+                  I agree to all terms & conditions
+                </label>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="pt-4">
+                <button type="submit"
+                  class="px-16 py-4 bg-black text-white font-semibold tracking-wide uppercase hover:bg-black-60 transition-colors">
+                  Send
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer id="footer" class="bg-white border-t border-gray-border">
+    <div class="max-w-[1440px] mx-auto px-6 md:px-[8px] py-12 md:py-16">
+
+      <div id="footer-grid" class="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-6">
+
+        <div id="footer-about" class="col-span-1 md:col-span-2">
+          <h4 class="text-sm font-normal text-black mb-6"></h4>
+          <ul class="space-y-4"></ul>
+        </div>
+
+        <div id="footer-help" class="col-span-1 md:col-span-2">
+          <h4 class="text-sm font-normal text-black mb-6"></h4>
+          <ul class="space-y-4"></ul>
+        </div>
+
+        <div id="footer-social" class="col-span-1 md:col-span-2">
+          <h4 class="text-sm font-normal text-black mb-6"></h4>
+          <ul class="space-y-4"></ul>
+        </div>
+
+        <div id="footer-legal" class="col-span-1 md:col-span-2">
+          <h4 class="text-sm font-normal text-black mb-6"></h4>
+          <ul class="space-y-4"></ul>
+        </div>
+
+        <div id="footer-newsletter" class="col-span-2 md:col-span-4">
+          <h4 class="text-sm font-normal text-black mb-6"></h4>
+          <form class="space-y-4">
+            <input type="email" id="newsletter-email"
+              class="w-full py-3 border-b border-gray-border bg-transparent text-black placeholder-gray focus:outline-none focus:border-black transition-colors">
+            <button type="submit" id="newsletter-btn"
+              class="w-full py-4 bg-gray-light text-black text-sm font-semibold tracking-wide hover:bg-gray-border transition-colors">
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Copyright Bar -->
+    <div class="border-gray-border">
+      <div class="max-w-[1440px] mx-auto py-6  flex flex-row justify-between">
+        <span id="footer-copyright" class="text-sm font-normal text-black"></span>
+        <span id="footer-credit" class="text-sm text-gray text-right"></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Footer Script -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const footerData = MOCK_DATA.footer;
+      if (!footerData) return;
+
+      // Render columns
+      footerData.columns.forEach(col => {
+        const el = document.getElementById(`footer-${col.id}`);
+        if (!el) return;
+        el.querySelector('h4').textContent = col.title;
+        el.querySelector('ul').innerHTML = col.links.map(link =>
+          `<li><a href="${link.href}" class="text-sm text-gray hover:text-black transition-colors">${link.label}</a></li>`
+        ).join('');
+      });
+
+      // Render newsletter
+      const { newsletter } = footerData;
+      document.querySelector('#footer-newsletter h4').textContent = newsletter.title;
+      document.getElementById('newsletter-email').placeholder = newsletter.placeholder;
+      document.getElementById('newsletter-btn').textContent = newsletter.buttonText;
+
+      // Render copyright & credit
+      document.getElementById('footer-copyright').textContent = footerData.copyright;
+      document.getElementById('footer-credit').textContent = footerData.credit;
+    });
+  </script>
+
+  <!-- Mock Data -->
+  <script src="assets/js/mockData.js"></script>
+
+
+
+</body>
+
+</html>
